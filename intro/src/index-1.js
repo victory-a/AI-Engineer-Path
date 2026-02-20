@@ -30,7 +30,6 @@ async function callLLM() {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Generating...';
 
-  debugger;
   try {
     const response = await openai.chat.completions.create({
       model: process.env.AI_MODEL,
