@@ -12,7 +12,6 @@ const submitBtn = document.getElementById('submit-btn');
 
 async function callLLM() {
   const userPrompt = promptElement.value;
-
   if (!userPrompt.trim()) {
     alert('Please enter a prompt');
     return;
@@ -33,14 +32,38 @@ async function callLLM() {
     });
 
     if (!response.ok) {
-      throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      const contentType = response.headers.get('content-type') || '';
+      let details = '';
+
+      if (contentType.includes('application/json')) {
+        const errorJson = await response.json();
+        details = errorJson?.message || '';
+      } else {
+        details = await response.text();
+      }
+
+      throw new Error(`Server error: ${response.status} ${response.statusText}${details ? ` - ${details}` : ''}`);
     }
 
-    const data = await response.json();
-    console.log(data.message);
+    if (!response.body) {
+      throw new Error('Streaming is not supported in this browser.');
+    }
 
-    const giftSuggestions = data.message;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let giftSuggestions = '';
 
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      giftSuggestions += decoder.decode(value, { stream: true });
+      responseElement.innerHTML = DOMPurify.sanitize(marked.parse(giftSuggestions));
+    }
+
+    giftSuggestions += decoder.decode(); // flush what may be left in the buffer
     if (giftSuggestions) {
       responseElement.innerHTML = DOMPurify.sanitize(marked.parse(giftSuggestions));
     }
@@ -70,4 +93,5 @@ promptElement.addEventListener('keypress', (e) => {
   }
 });
 
-const prompt = 'gift ideas for a 7 year old arsenal fan';
+const defaultPrompt = 'gift ideas for a 7 year old arsenal fan';
+``;

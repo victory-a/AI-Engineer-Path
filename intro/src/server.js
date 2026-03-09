@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import OpenAI from 'openai';
 
 dotenv.config();
 
@@ -43,18 +43,34 @@ After the gift ideas, include a section titled "Questions for you"
 with clarifying questions that would help improve the recommendations.`;
 
   try {
-    const response = await openai.responses.create({
-      model: process.env.AI_MODEL,
+    const stream = await openai.responses.create({
+      model: AI_MODEL,
       input: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
+      stream: true,
       // tools: [{ type: 'web_search' }],
     });
 
-    res.json({ message: response.output_text });
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    for await (const event of stream) {
+      if (event.type === 'response.output_text.delta' && event.delta) {
+        res.write(event.delta);
+      }
+    }
+
+    res.end();
   } catch (error) {
-    res.status(500).json({ message: error.message || error || 'An error occurred while processing your request.', status: 400 });
+    if (!res.headersSent) {
+      res.status(500).json({ message: error.message || error || 'An error occurred while processing your request.' });
+      return;
+    }
+    res.end();
   }
 });
 

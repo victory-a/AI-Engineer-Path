@@ -5,14 +5,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: {
-      'process.env.AI_KEY': JSON.stringify(env.AI_KEY),
-      'process.env.AI_URL': JSON.stringify(env.AI_URL),
-      'process.env.AI_MODEL': JSON.stringify(env.AI_MODEL),
+      'process.env.API_PROXY_TARGET': JSON.stringify(env.API_PROXY_TARGET),
     },
     server: {
       proxy: {
         '/api': {
-          target: 'http://localhost:5001',
+          target: env.API_PROXY_TARGET || 'http://localhost:8787',
           changeOrigin: true,
         },
       },
