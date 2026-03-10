@@ -29,9 +29,23 @@ constrained context.
 After the gift ideas, include a section titled "Questions for you"
 with clarifying questions that would help improve the recommendations.`;
 
+const headers = {
+	'Content-Type': 'text/plain; charset=utf-8',
+	'Cache-Control': 'no-cache',
+	Connection: 'keep-alive',
+	//cors headers
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'OPTIONS, GET, POST',
+	'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 export default {
 	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
+
+		if (request.method === 'OPTIONS') {
+			return new Response(null, { headers });
+		}
 
 		if (request.method !== 'POST') {
 			return new Response('Not found', { status: 404 });
