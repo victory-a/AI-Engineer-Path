@@ -23,7 +23,7 @@ async function callLLM() {
   submitBtn.textContent = 'Generating...';
 
   try {
-    const response = await fetch('/api/gift', {
+    const response = await fetch(process.env.API_PROXY_TARGET, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
