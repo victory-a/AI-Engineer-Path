@@ -33,7 +33,7 @@ export default {
 	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
 
-		if (url.pathname !== '/gift' && request.method !== 'POST') {
+		if (request.method !== 'POST') {
 			return new Response('Not found', { status: 404 });
 		}
 
