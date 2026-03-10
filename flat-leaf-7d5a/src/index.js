@@ -42,9 +42,8 @@ export default {
 			baseURL: env.AI_URL,
 		});
 
-		const body = await request.json();
-
 		try {
+			const body = await request.json();
 			const stream = await openai.responses.create({
 				model: env.AI_MODEL,
 				input: [
@@ -72,12 +71,14 @@ export default {
 					'Content-Type': 'text/plain; charset=utf-8',
 					'Cache-Control': 'no-cache',
 					Connection: 'keep-alive',
-					'Transfer-Encoding': 'chunked',
 				},
 			});
 		} catch (error) {
 			console.log(`Error processing request: ${error}`);
-			return new Response(error, { status: 400 });
+			return new Response(JSON.stringify({ error: error.message }), {
+				status: 500,
+				headers: { 'Content-Type': 'application/json' },
+			});
 		}
 	},
 };
