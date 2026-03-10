@@ -31,55 +31,38 @@ async function callLLM() {
       body: JSON.stringify({ userPrompt }),
     });
 
-    if (!response.ok) {
-      const contentType = response.headers.get('content-type') || '';
-      let details = '';
-
-      if (contentType.includes('application/json')) {
-        const errorJson = await response.json();
-        details = errorJson?.message || '';
-      } else {
-        details = await response.text();
-      }
-
-      throw new Error(`Server error: ${response.status} ${response.statusText}${details ? ` - ${details}` : ''}`);
-    }
-
     if (!response.body) {
       throw new Error('Streaming is not supported in this browser.');
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let giftSuggestions = '';
+    if (response.ok) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let giftSuggestions = '';
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        giftSuggestions += decoder.decode(value, { stream: true });
+        responseElement.innerHTML = DOMPurify.sanitize(marked.parse(giftSuggestions));
       }
 
-      giftSuggestions += decoder.decode(value, { stream: true });
-      responseElement.innerHTML = DOMPurify.sanitize(marked.parse(giftSuggestions));
-    }
-
-    giftSuggestions += decoder.decode(); // flush what may be left in the buffer
-    if (giftSuggestions) {
-      responseElement.innerHTML = DOMPurify.sanitize(marked.parse(giftSuggestions));
+      giftSuggestions += decoder.decode(); // flush what may be left in the buffer
+      if (giftSuggestions) {
+        responseElement.innerHTML = DOMPurify.sanitize(marked.parse(giftSuggestions));
+      }
+    } else {
+      const errorText = await response.text();
+      throw new Error(errorText);
     }
   } catch (error) {
+    debugger;
     errorSection.style.display = 'block';
 
-    let message = '';
-    if (error.status === 401 || error.status === 403) {
-      message = 'Authentication error: Check your AI_KEY and make sure it’s valid.';
-    } else if (error.status >= 500) {
-      message = 'AI provider error: Something went wrong on the provider side. Try again shortly.';
-    } else {
-      message = 'Unexpected error: ' + (error.message || error);
-    }
-
-    errorElement.textContent = message;
+    errorElement.textContent = 'Unexpected error: ' + error;
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit';

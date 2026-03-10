@@ -76,8 +76,8 @@ export default {
 				},
 			});
 		} catch (error) {
-			console.log('error processing request', error);
-			return new Response(error.message, { status: 500 });
+			console.log(`Error processing request: ${error}`);
+			return new Response(error, { status: 400 });
 		}
 	},
 };
