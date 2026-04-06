@@ -1,0 +1,22 @@
+import { defineConfig, loadEnv } from 'vite';
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
+    define: {
+      // 'process.env.API_PROXY_TARGET': JSON.stringify(env.API_PROXY_TARGET),
+      'process.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY),
+      'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
+      'process.env.SUPABASE_API_KEY': JSON.stringify(env.SUPABASE_API_KEY),
+    },
+    server: {
+      proxy: {
+        '/api': {
+          target: env.API_PROXY_TARGET || 'http://localhost:8787',
+          changeOrigin: true,
+        },
+      },
+    },
+  };
+});
