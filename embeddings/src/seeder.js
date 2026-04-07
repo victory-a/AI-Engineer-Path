@@ -56,8 +56,6 @@ async function createAndStoreEmbeddings(input, dbName) {
   console.log('Embedding and storing complete!');
 }
 
-// const seeder = async (text, dbName) => {
 await createAndStoreEmbeddings(text, dbName);
-// };
 
 export { createAndStoreEmbeddings };
