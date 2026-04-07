@@ -1,23 +1,7 @@
 import './style.css';
-import { checkEnvironment } from './utils.js';
-import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { openai, supabase } from './config.js';
 // import DOMPurify from 'dompurify';
 // import { marked } from 'marked';
-
-checkEnvironment();
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
-
-const privateKey = process.env.SUPABASE_API_KEY;
-if (!privateKey) throw new Error(`Expected env var SUPABASE_API_KEY`);
-const url = process.env.SUPABASE_URL;
-if (!url) throw new Error(`Expected env var SUPABASE_URL`);
-
-const supabase = createClient(url, privateKey);
 
 const query = 'A podcast elon musk will enjoy?';
 

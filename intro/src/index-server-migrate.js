@@ -59,7 +59,6 @@ async function callLLM() {
       throw new Error(errorText);
     }
   } catch (error) {
-    debugger;
     errorSection.style.display = 'block';
 
     errorElement.textContent = 'Unexpected error: ' + error;

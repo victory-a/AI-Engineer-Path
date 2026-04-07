@@ -19,7 +19,7 @@ if (!url) throw new Error(`Expected env var SUPABASE_URL`);
 
 const supabase = createClient(url, privateKey);
 
-const content = [
+export const content = [
   'Beyond Mars (1 hr 15 min): Join space enthusiasts as they speculate about extraterrestrial life and the mysteries of distant planets.',
   'Jazz under stars (55 min): Experience a captivating night in New Orleans, where jazz melodies echo under the moonlit sky.',
   'Mysteries of the deep (1 hr 30 min): Dive with marine explorers into the uncharted caves of our oceans and uncover their hidden wonders.',
@@ -32,24 +32,32 @@ const content = [
   'Songs of the Sea (1 hr): Dive deep with marine biologists to understand the intricate whale songs echoing in our vast oceans.',
 ];
 
-async function createAndStoreEmbeddings(input) {
-  const data = await Promise.all(
-    input.map(async (textChunk) => {
-      const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-ada-002',
-        input: textChunk,
-      });
-      return { content: textChunk, embedding: embeddingResponse.data[0].embedding };
-    }),
-  );
+async function createAndStoreEmbeddings(input, dbName) {
+  try {
+    const data = await Promise.all(
+      input.map(async (textChunk) => {
+        const embeddingResponse = await openai.embeddings.create({
+          model: 'text-embedding-ada-002',
+          input: textChunk.pageContent || textChunk, // Handle both string and object with pageContent
+        });
+        return { content: textChunk.pageContent, embedding: embeddingResponse.data[0].embedding };
+      }),
+    );
 
-  // Insert content and embedding into Supabase
-  await supabase.from('documents').insert(data);
+    // Insert content and embedding into Supabase
+    const { error } = await supabase.from(dbName).insert(data);
+
+    if (error) {
+      throw new Error('Issue inserting data into the database.');
+    }
+  } catch (error) {
+    console.error('Error creating or storing embeddings:', error.message);
+  }
   console.log('Embedding and storing complete!');
 }
 
-const seeder = async () => {
-  await createAndStoreEmbeddings(content);
-};
+// const seeder = async (text, dbName) => {
+await createAndStoreEmbeddings(text, dbName);
+// };
 
-export { seeder };
+export { createAndStoreEmbeddings };
