@@ -9,14 +9,6 @@ export default defineConfig(({ mode }) => {
       'process.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY),
       'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
       'process.env.SUPABASE_API_KEY': JSON.stringify(env.SUPABASE_API_KEY),
-    },
-    server: {
-      proxy: {
-        '/api': {
-          target: env.API_PROXY_TARGET || 'http://localhost:8787',
-          changeOrigin: true,
-        },
-      },
-    },
+    }, 
   };
 });

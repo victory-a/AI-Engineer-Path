@@ -17,37 +17,55 @@ if (!privateKey) throw new Error(`Expected env var SUPABASE_API_KEY`);
 const url = process.env.SUPABASE_URL;
 if (!url) throw new Error(`Expected env var SUPABASE_URL`);
 
-export const supabase = createClient(url, privateKey);
+const supabase = createClient(url, privateKey);
 
-const content = [
-  'Beyond Mars (1 hr 15 min): Join space enthusiasts as they speculate about extraterrestrial life and the mysteries of distant planets.',
-  'Jazz under stars (55 min): Experience a captivating night in New Orleans, where jazz melodies echo under the moonlit sky.',
-  'Mysteries of the deep (1 hr 30 min): Dive with marine explorers into the uncharted caves of our oceans and uncover their hidden wonders.',
-  'Rediscovering lost melodies (48 min): Journey through time to explore the resurgence of vinyl culture and its timeless appeal.',
-  'Tales from the tech frontier (1 hr 5 min): Navigate the complex terrain of AI ethics, understanding its implications and challenges.',
-  "The soundscape of silence (30 min): Traverse the globe with sonic explorers to find the world's most serene and silent spots.",
-  'Decoding dreams (1 hr 22 min): Step into the realm of the subconscious, deciphering the intricate narratives woven by our dreams.',
-  'Time capsules (50 min): Revel in the bizarre, endearing, and profound discoveries that unveil the quirks of a century past.',
-  'Frozen in time (1 hr 40 min): Embark on an icy expedition, unearthing secrets hidden within the majestic ancient glaciers.',
-  'Songs of the Sea (1 hr): Dive deep with marine biologists to understand the intricate whale songs echoing in our vast oceans.',
+const query = 'A podcast elon musk will enjoy?';
+
+// Create an embedding vector representing the input text
+async function createEmbedding(input) {
+  const embeddingResponse = await openai.embeddings.create({
+    model: 'text-embedding-ada-002',
+    input,
+  });
+  return embeddingResponse.data[0].embedding;
+}
+
+// Query Supabase and return a semantically matching text chunk
+async function findNearestMatch(embedding) {
+  const { data } = await supabase.rpc('match_documents', {
+    query_embedding: embedding,
+    match_threshold: 0.5,
+    match_count: 1,
+  });
+  return data[0].content;
+}
+
+// Use OpenAI to make the response conversational
+const chatMessages = [
+  {
+    role: 'system',
+    content: `You are an enthusiastic podcast expert who loves recommending podcasts to people. You will be given two pieces of information - some context about podcasts episodes and a question. Your main job is to formulate a short answer to the question using the provided context. If you are unsure and cannot find the answer in the context, say, "Sorry, I don't know the answer." Please do not make up the answer.`,
+  },
 ];
 
-async function main(input) {
-  const data = await Promise.all(
-    input.map(async (textChunk) => {
-      const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-ada-002',
-        input: textChunk,
-      });
-      return { content: textChunk, embedding: embeddingResponse.data[0].embedding };
-    }),
-  );
+async function getChatResponse(context, question) {
+  chatMessages.push({ role: 'user', content: `Context: ${context}\n\nQuestion: ${question}` });
 
-  // Insert content and embedding into Supabase
-  await supabase.from('documents').insert(data);
-  console.log('Embedding and storing complete!');
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4',
+    messages: chatMessages,
+    temperature: 0.5,
+    frequency_penalty: 0.5,
+  });
+
+  console.log(response.choices[0].message.content);
 }
-// main(content);
 
+async function main(input) {
+  const embedding = await createEmbedding(input);
+  const match = await findNearestMatch(embedding);
 
-const query = "Jammin in the Big Easy";
+  await getChatResponse(match, input);
+}
+
+main(query);
