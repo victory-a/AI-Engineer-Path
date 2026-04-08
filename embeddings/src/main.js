@@ -52,4 +52,4 @@ async function main(input) {
   await getChatResponse(match, input);
 }
 
-main(query);
+// main(query);

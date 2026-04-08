@@ -32,15 +32,20 @@ export const content = [
   'Songs of the Sea (1 hr): Dive deep with marine biologists to understand the intricate whale songs echoing in our vast oceans.',
 ];
 
+export async function createEmbedding(input) {
+  const embeddingResponse = await openai.embeddings.create({
+    model: 'text-embedding-ada-002',
+    input,
+  });
+  return embeddingResponse.data[0].embedding;
+}
+
 async function createAndStoreEmbeddings(input, dbName) {
   try {
     const data = await Promise.all(
       input.map(async (textChunk) => {
-        const embeddingResponse = await openai.embeddings.create({
-          model: 'text-embedding-ada-002',
-          input: textChunk.pageContent || textChunk, // Handle both string and object with pageContent
-        });
-        return { content: textChunk.pageContent, embedding: embeddingResponse.data[0].embedding };
+        const embedding = await createEmbedding(textChunk.pageContent || textChunk);
+        return { content: textChunk.pageContent, embedding };
       }),
     );
 
@@ -56,6 +61,6 @@ async function createAndStoreEmbeddings(input, dbName) {
   console.log('Embedding and storing complete!');
 }
 
-await createAndStoreEmbeddings(text, dbName);
+// await createAndStoreEmbeddings(content, "movies");
 
 export { createAndStoreEmbeddings };
