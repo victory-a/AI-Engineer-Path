@@ -8,5 +8,5 @@ export async function getCurrentWeather() {
 }
 
 export async function getLocation() {
-    return "Salt Lake City, UT"
+    return "Lagos, Nigeria"
 }
